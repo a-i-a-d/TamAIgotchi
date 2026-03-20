@@ -59,7 +59,6 @@ void setup() {
 /* setup i2s */  
   combinedOutput(0, 16, "Initializing I2S bus...", true);
   i2s.setPins(I2S_SCK, I2S_WS, -1, I2S_DIN);
-  //if (!i2s.begin(I2S_MODE_STD, 16000, I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO, I2S_STD_SLOT_LEFT)) {
   if (!i2s.begin(I2S_MODE_STD, 16000, I2S_DATA_BIT_WIDTH_32BIT, I2S_SLOT_MODE_MONO, I2S_STD_SLOT_LEFT)) {
     combinedOutput(0, 26, "Failed to initialize I2S bus!");
     return;
@@ -67,7 +66,7 @@ void setup() {
   combinedOutput(0, 26, "I2S bus initialized.");
 
 /* setup openai */
-  chat.setModel("gpt-4");   //Model to use for completion. Default is gpt-3.5-turbo
+  chat.setModel("gpt-4");           //Model to use for completion. Default is gpt-3.5-turbo
   chat.setSystem("Code geek");      //Description of the required assistant
   chat.setMaxTokens(1000);          //The maximum number of tokens to generate in the completion.
   chat.setTemperature(0.2);         //float between 0 and 2. Higher value gives more random results.
@@ -89,7 +88,7 @@ void loop() {
   if ((millis() - lastDebounce) > 50) {
     // Button is pushed (low due to pullup)
     if (reading == LOW) {
-      // only display when button is pressed the first time
+      // only run when button is pressed the first time
       if(!buttonPushed) {
         buttonPushed = true;
         String prompt = speechToText();
@@ -97,7 +96,7 @@ void loop() {
       }
     }
     else {
-      // only display when button is released the first time
+      // only run when button is released the first time
       if(buttonPushed) {
         buttonPushed = false;
       }
@@ -122,9 +121,6 @@ void displayIP() {
 }
 
 String speechToText() {
-  //uint8_t *wav_buffer = (uint8_t *) ps_calloc(1000, sizeof(uint8_t));
-  logMemory();
-  //uint8_t* wav_buffer = (uint8_t*)ps_malloc(1);
   uint8_t *wav_buffer;
   size_t wav_size;
 
@@ -133,16 +129,9 @@ String speechToText() {
   wav_buffer = i2s.recordWAV(5, &wav_size);
   digitalWrite(LED_PIN, LOW);
 
-  logMemory();
   combinedOutput(0, 16, "Sending audio", true);
   String transcription = audio.file(wav_buffer, wav_size, OPENAI_AUDIO_INPUT_FORMAT_WAV);
-  //Serial.println(transcription);
-
-  logMemory();
-  //char ctranscription[transcription.length() + 1];
-  //memcpy(ctranscription, transcription.c_str(), transcription.length() + 1);
-  //combinedOutput(0, 16, "Prompt: ", true);
-  //combinedOutput(0, 26, ctranscription, false);
+  log_d(transcription);
 
   free(wav_buffer);
   logMemory();
@@ -159,7 +148,7 @@ void textGeneration(String prompt) {
   Serial.printf("Received message. Tokens: %u\n", result.tokens());
   String response = result.getAt(0);
   response.trim();
-  //Serial.println(response);
+  log_d(response);
 
   char cresponse[response.length() + 1];
   memcpy(cresponse, response.c_str(), response.length() + 1);
