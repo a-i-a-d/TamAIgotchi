@@ -13,13 +13,11 @@ OpenAI openai(api_key);
 OpenAI_ChatCompletion chat(openai);
 OpenAI_AudioTranscription audio(openai);
 
-char ipAddress[16];
 uint32_t lastButtonState = HIGH;
 uint32_t lastDebounce = 0;
 bool buttonPushed = false;
 
 void combinedOutput(int x, int y, char* line, bool clrscr = false);
-void displayIP();
 String speechToText();
 void textGeneration(String prompt);
 
@@ -53,8 +51,6 @@ void setup() {
       pos = 0;
     }
   }
-  IPAddress ip = WiFi.localIP();
-  snprintf(ipAddress, sizeof(ipAddress), "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
 
 /* setup i2s */  
   combinedOutput(0, 16, "Initializing I2S bus...", true);
@@ -107,17 +103,11 @@ void loop() {
 void combinedOutput(int x, int y, char* line, bool clrscr) {
   if(clrscr) {
     display.clearDisplay();
-    displayIP();
   }
   Serial.println(line);
   display.setCursor(x, y);
   display.println(line);
   display.display();
-}
-
-void displayIP() {
-  combinedOutput(0, 0, "IP: ");
-  combinedOutput(30, 0, ipAddress);
 }
 
 String speechToText() {
