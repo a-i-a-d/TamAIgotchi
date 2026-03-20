@@ -9,5 +9,5 @@ const char* api_key = "sk1234567890";
 #define I2S_WS      18     // LRCLK
 #define I2S_SCK     16     // BCLK
 
-#define BUTTON1_PIN  3     // Button → GND (INPUT_PULLUP)
-#define LED_PIN      12
+#define BUTTON_PIN  3     // Button → GND (INPUT_PULLUP)
+#define LED_PIN     12
