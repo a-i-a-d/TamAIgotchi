@@ -124,7 +124,6 @@ String speechToText() {
   log_d(transcription);
 
   free(wav_buffer);
-  logMemory();
   return transcription;
 }
 
@@ -149,8 +148,4 @@ void textGeneration(String prompt) {
     Serial.print("Error! ");
     Serial.println(result.error());
   }
-}
-
-void logMemory() {
-  log_d("Used PSRAM: %d", ESP.getPsramSize() - ESP.getFreePsram());
 }
