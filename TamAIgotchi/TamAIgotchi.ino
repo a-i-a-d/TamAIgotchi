@@ -17,89 +17,6 @@ uint32_t lastButtonState = HIGH;
 uint32_t lastDebounce = 0;
 bool buttonPushed = false;
 
-void combinedOutput(int x, int y, char* line, bool clrscr = false);
-String speechToText();
-void textGeneration(String prompt);
-
-void setup() {
-  Serial.begin(115200);
-  pinMode(BUTTON1_PIN, INPUT_PULLUP);
-  pinMode(BUTTON2_PIN, INPUT_PULLUP);
-  pinMode(BUTTON3_PIN, INPUT_PULLUP);
-  pinMode(BUTTON4_PIN, INPUT_PULLUP);
-  pinMode(LED_PIN, OUTPUT);
-
-/* setup display*/
-  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
-    Serial.println(F("SSD1306 allocation failed"));
-    for(;;);
-  }
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.clearDisplay();
-
-/* connect to WiFi */
-  combinedOutput(0, 16, "Connecting to WiFi", true);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  int pos = 0;
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    combinedOutput(pos, 20, ".");
-    pos = pos + 2;
-    if(pos >= 128) {
-      pos = 0;
-    }
-  }
-
-/* setup i2s */  
-  combinedOutput(0, 16, "Initializing I2S bus...", true);
-  i2s.setPins(I2S_SCK, I2S_WS, -1, I2S_DIN);
-  if (!i2s.begin(I2S_MODE_STD, 16000, I2S_DATA_BIT_WIDTH_32BIT, I2S_SLOT_MODE_MONO, I2S_STD_SLOT_LEFT)) {
-    combinedOutput(0, 26, "Failed to initialize I2S bus!");
-    return;
-  }
-  combinedOutput(0, 26, "I2S bus initialized.");
-
-/* setup openai */
-  chat.setModel("gpt-4");           //Model to use for completion. Default is gpt-3.5-turbo
-  chat.setSystem("Code geek");      //Description of the required assistant
-  chat.setMaxTokens(1000);          //The maximum number of tokens to generate in the completion.
-  chat.setTemperature(0.2);         //float between 0 and 2. Higher value gives more random results.
-  chat.setStop("\r");               //Up to 4 sequences where the API will stop generating further tokens.
-  chat.setPresencePenalty(0);       //float between -2.0 and 2.0. Positive values increase the model's likelihood to talk about new topics.
-  chat.setFrequencyPenalty(0);      //float between -2.0 and 2.0. Positive values decrease the model's likelihood to repeat the same line verbatim.
-  chat.setUser("OpenAI-ESP32");     //A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
-}
-
-
-void loop() {
-  int reading = digitalRead(BUTTON1_PIN);
-
-  if (reading != lastButtonState) {
-      lastDebounce = millis();
-      lastButtonState = reading;
-  }
-
-  if ((millis() - lastDebounce) > 50) {
-    // Button is pushed (low due to pullup)
-    if (reading == LOW) {
-      // only run when button is pressed the first time
-      if(!buttonPushed) {
-        buttonPushed = true;
-        String prompt = speechToText();
-        textGeneration(prompt);
-      }
-    }
-    else {
-      // only run when button is released the first time
-      if(buttonPushed) {
-        buttonPushed = false;
-      }
-    }
-  }
-}
-
 void combinedOutput(int x, int y, char* line, bool clrscr) {
   if(clrscr) {
     display.clearDisplay();
@@ -147,5 +64,80 @@ void textGeneration(String prompt) {
   if(result.error()) {
     Serial.print("Error! ");
     Serial.println(result.error());
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(BUTTON1_PIN, INPUT_PULLUP);
+  pinMode(BUTTON2_PIN, INPUT_PULLUP);
+  pinMode(BUTTON3_PIN, INPUT_PULLUP);
+  pinMode(BUTTON4_PIN, INPUT_PULLUP);
+  pinMode(LED_PIN, OUTPUT);
+
+/* setup display*/
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;);
+  }
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.clearDisplay();
+
+/* connect to WiFi */
+  combinedOutput(0, 16, "Connecting to WiFi", true);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  int pos = 0;
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    combinedOutput(pos, 20, ".", false);
+    pos = pos + 2;
+    if(pos >= 128) {
+      pos = 0;
+    }
+  }
+
+/* setup i2s */  
+  combinedOutput(0, 16, "Initializing I2S bus...", true);
+  i2s.setPins(I2S_SCK, I2S_WS, -1, I2S_DIN);
+  if (!i2s.begin(I2S_MODE_STD, 16000, I2S_DATA_BIT_WIDTH_32BIT, I2S_SLOT_MODE_MONO, I2S_STD_SLOT_LEFT)) {
+    combinedOutput(0, 26, "Failed to initialize I2S bus!", false);
+    return;
+  }
+  combinedOutput(0, 26, "I2S bus initialized.", false);
+
+/* setup openai */
+  chat.setModel("gpt-4");           //Model to use for completion. Default is gpt-3.5-turbo
+  chat.setSystem("Code geek");      //Description of the required assistant
+  chat.setMaxTokens(1000);          //The maximum number of tokens to generate in the completion.
+  chat.setTemperature(0.2);         //float between 0 and 2. Higher value gives more random results.
+  chat.setStop("\r");               //Up to 4 sequences where the API will stop generating further tokens.
+  chat.setPresencePenalty(0);       //float between -2.0 and 2.0. Positive values increase the model's likelihood to talk about new topics.
+  chat.setFrequencyPenalty(0);      //float between -2.0 and 2.0. Positive values decrease the model's likelihood to repeat the same line verbatim.
+  chat.setUser("OpenAI-ESP32");     //A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
+}
+
+void loop() {
+  int reading = digitalRead(BUTTON1_PIN);
+
+  if (reading != lastButtonState) {
+      lastDebounce = millis();
+      lastButtonState = reading;
+  }
+
+  if ((millis() - lastDebounce) > 50) {
+    if (reading == LOW) { // Button is pushed (low due to pullup)
+      if(!buttonPushed) {
+        buttonPushed = true;
+        String prompt = speechToText();
+        textGeneration(prompt);
+      }
+    }
+    else {
+      if(buttonPushed) {
+        buttonPushed = false;
+      }
+    }
   }
 }
