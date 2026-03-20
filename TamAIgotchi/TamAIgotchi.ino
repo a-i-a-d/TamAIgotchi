@@ -31,12 +31,12 @@ String speechToText() {
   uint8_t *wav_buffer;
   size_t wav_size;
 
-  combinedOutput(0, 16, "Recording", true);
+  combinedOutput(0, 0, "Recording", true);
   digitalWrite(LED_PIN, HIGH);
   wav_buffer = i2s.recordWAV(5, &wav_size);
   digitalWrite(LED_PIN, LOW);
 
-  combinedOutput(0, 16, "Sending audio", true);
+  combinedOutput(0, 0, "Sending audio", true);
   String transcription = audio.file(wav_buffer, wav_size, OPENAI_AUDIO_INPUT_FORMAT_WAV);
   log_d(transcription);
 
@@ -47,8 +47,8 @@ String speechToText() {
 void textGeneration(String prompt) {
   char cprompt[prompt.length() + 1];
   memcpy(cprompt, prompt.c_str(), prompt.length() + 1);
-  combinedOutput(0, 16, "Sending prompt", true);
-  combinedOutput(0, 26, cprompt, false);
+  combinedOutput(0, 0, "Sending prompt", true);
+  combinedOutput(0, 16, cprompt, false);
 
   OpenAI_StringResponse result = chat.message(prompt);
   Serial.printf("Received message. Tokens: %u\n", result.tokens());
@@ -58,8 +58,8 @@ void textGeneration(String prompt) {
 
   char cresponse[response.length() + 1];
   memcpy(cresponse, response.c_str(), response.length() + 1);
-  combinedOutput(0, 16, "Response: ", true);
-  combinedOutput(0, 26, cresponse, false);
+  combinedOutput(0, 0, "Response: ", true);
+  combinedOutput(0, 16, cresponse, false);
 
   if(result.error()) {
     Serial.print("Error! ");
@@ -70,9 +70,6 @@ void textGeneration(String prompt) {
 void setup() {
   Serial.begin(115200);
   pinMode(BUTTON1_PIN, INPUT_PULLUP);
-  pinMode(BUTTON2_PIN, INPUT_PULLUP);
-  pinMode(BUTTON3_PIN, INPUT_PULLUP);
-  pinMode(BUTTON4_PIN, INPUT_PULLUP);
   pinMode(LED_PIN, OUTPUT);
 
 /* setup display*/
@@ -85,13 +82,13 @@ void setup() {
   display.clearDisplay();
 
 /* connect to WiFi */
-  combinedOutput(0, 16, "Connecting to WiFi", true);
+  combinedOutput(0, 0, "Connecting to WiFi", true);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   int pos = 0;
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    combinedOutput(pos, 20, ".", false);
+    combinedOutput(pos, 4, ".", false);
     pos = pos + 2;
     if(pos >= 128) {
       pos = 0;
@@ -99,13 +96,13 @@ void setup() {
   }
 
 /* setup i2s */  
-  combinedOutput(0, 16, "Initializing I2S bus...", true);
+  combinedOutput(0, 0, "Initializing I2S bus...", true);
   i2s.setPins(I2S_SCK, I2S_WS, -1, I2S_DIN);
   if (!i2s.begin(I2S_MODE_STD, 16000, I2S_DATA_BIT_WIDTH_32BIT, I2S_SLOT_MODE_MONO, I2S_STD_SLOT_LEFT)) {
-    combinedOutput(0, 26, "Failed to initialize I2S bus!", false);
+    combinedOutput(0, 16, "Failed to initialize I2S bus!", false);
     return;
   }
-  combinedOutput(0, 26, "I2S bus initialized.", false);
+  combinedOutput(0, 16, "I2S bus initialized.", false);
 
 /* setup openai */
   chat.setModel("gpt-4");           //Model to use for completion. Default is gpt-3.5-turbo
