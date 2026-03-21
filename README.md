@@ -62,5 +62,5 @@ Additionally, you'll require a modified version of the OpenAI-ESP32 library that
 ## Usage
 
 When you push the button, the LED lights up and the microphone will record 5 seconds of audio.
-The audio recording is sent to your LocalAI whisper model and gets transcoded into a reply text.
-The reply then is sent as prompt to the LocalAI gpt4 model and the reply is shown on the oled display.
+The audio recording is sent to your LocalAI whisper model and gets transcoded into a text.
+The text then is sent as prompt to the LocalAI gpt4 model and the response is shown on the oled display.
