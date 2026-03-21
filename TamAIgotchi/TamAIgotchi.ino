@@ -9,7 +9,7 @@
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 I2SClass i2s;
 
-OpenAI openai(api_key);
+OpenAI openai(api_key, api_url);
 OpenAI_ChatCompletion chat(openai);
 OpenAI_AudioTranscription audio(openai);
 

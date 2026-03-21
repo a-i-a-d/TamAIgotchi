@@ -18,11 +18,18 @@ The code is the absolute minimum required.
 
 ## Configuration
 
-You have to edit config.h and enter your WiFi SSID and password in the first two lines:
+You have to edit config.h and enter your
+- WiFi SSID
+- WiFi Passkey
+- LocalAI API url
+in the first three lines:
 ```
 const char* ssid = "SSID";
 const char* password = "PASSWORD";
+const char* api_url = "http://192\.168\.1\.5:8080/v1/";
 ```
+
+Please make sure to escape dots (.) in the url string like in the example above.
 
 ## Required Libraries
 
