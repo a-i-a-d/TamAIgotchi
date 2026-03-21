@@ -22,6 +22,7 @@ You have to edit config.h and enter your
 - WiFi SSID
 - WiFi Passkey
 - LocalAI API url
+
 in the first three lines:
 ```
 const char* ssid = "SSID";
