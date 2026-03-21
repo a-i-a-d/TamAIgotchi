@@ -1,10 +1,8 @@
 # TamAIgotchi
-ESP32 based client for LocalAI
+ESP32 based client for [LocalAI](https://localai.io/)
 
-This is a small demonstration on how an ESP32 with a digital microphone and oled display can act as frontend to LocalAI.
+This is a basic demonstration on how an ESP32 with a digital microphone and oled display can act as frontend to LocalAI.
 It can be compiled and installed using the Arduino IDE
-
-The code is the absolute minimum required.
 
 ## Required Parts
 
@@ -12,9 +10,22 @@ The code is the absolute minimum required.
 - INMP441 I2S Microphone
 - 0,96 Zoll OLED Display I2C 128 x 64
 
+## Required Software
+
+- [Arduino IDE](https://docs.arduino.cc/software/ide/)
+- [Arduino-ESP32](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html)
+
 ## Connection Diagram
 
 ![Fritzing Connection Diagram](TamAIgotchi.png)
+
+## Installation
+
+```
+git clone https://github.com/a-i-a-d/TamAIgotchi.git
+cd TamAIgotchi
+arduino-ide TamAIgotchi/TamAIgotchi.ino
+```
 
 ## Configuration
 
