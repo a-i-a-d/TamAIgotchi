@@ -49,8 +49,9 @@ To compile the program you'll need to install the following libraries in the Ard
 - Adafruit SSD1306
 
 Additionally, you'll require a modified version of the OpenAI-ESP32 library that can be used with LocalAI:
-
-__TODO: Add modified OpenAI-ESP32 installation instructions__
+- Download [LocalAI-ESP32 library](https://github.com/a-i-a-d/LocalAI-ESP32/archive/refs/tags/v0.0.1.zip)
+- In the Arduino IDE got click Sketch->Include Library->Add .ZIP Library...
+- Select the downloaded LocalAI-ESP32-0.0.1.zip file
 
 ## Compilation and Upload
 
