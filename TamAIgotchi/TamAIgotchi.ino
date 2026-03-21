@@ -115,7 +115,7 @@ void setup() {
   chat.setFrequencyPenalty(0);      //float between -2.0 and 2.0. Positive values decrease the model's likelihood to repeat the same line verbatim.
   chat.setUser("OpenAI-ESP32");     //A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
 
-  audio.setTemperature(0.2);
+  audio.setTemperature(0.1);
   audio.setLanguage("en");
 }
 
