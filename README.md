@@ -14,6 +14,8 @@ The code is the absolute minimum required.
 
 # Connection Diagram
 
+![Fritzing Connection Diagram](TamAIgotchi.png)
+
 # Configuration
 
 You have to edit config.h and enter your WiFi SSID and password in the first two lines:
