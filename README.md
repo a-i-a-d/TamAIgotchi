@@ -6,17 +6,17 @@ It can be compiled and installed using the Arduino IDE
 
 The code is the absolute minimum required.
 
-# Required Parts
+## Required Parts
 
 - ESP32 with PSRAM. For this project a LOLIN S2 Mini was used
 - INMP441 I2S Microphone
 - 0,96 Zoll OLED Display I2C 128 x 64
 
-# Connection Diagram
+## Connection Diagram
 
 ![Fritzing Connection Diagram](TamAIgotchi.png)
 
-# Configuration
+## Configuration
 
 You have to edit config.h and enter your WiFi SSID and password in the first two lines:
 ```
@@ -24,7 +24,7 @@ const char* ssid = "SSID";
 const char* password = "PASSWORD";
 ```
 
-# Required Libraries
+## Required Libraries
 
 To compile the program you'll need to install the following libraries in the Arduino IDE:
 - Adafruit SSD1306
@@ -33,13 +33,13 @@ Additionally, you'll require a modified version of the OpenAI-ESP32 library that
 
 __TODO: Add modified OpenAI-ESP32 installation instructions__
 
-# Compilation and Upload
+## Compilation and Upload
 
 - Connect your ESP32 board via USB
 - Select the correct ESP32 board in the Arduino IDE
 - Click the Compile and Upload button
 
-# Usage
+## Usage
 
 When you push the button, the LED lights up and the microphone will record 5 seconds of audio.
 The audio recording is sent to your LocalAI whisper model and gets transcoded into a reply text.
