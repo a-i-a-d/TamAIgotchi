@@ -17,7 +17,7 @@ It can be compiled and installed using the Arduino IDE
 
 ## Connection Diagram
 
-![Fritzing Connection Diagram](TamAIgotchi.png)
+![Fritzing Connection Diagram](diagram/TamAIgotchi.png)
 
 ## Installation
 
