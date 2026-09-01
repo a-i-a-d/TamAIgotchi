@@ -2,6 +2,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <WiFi.h>
+#include <ESPWifiConfig.h>
 #include "ESP_I2S.h"
 #include <OpenAI.h>
 #include "config.h"
@@ -12,6 +13,11 @@ I2SClass i2s;
 OpenAI openai(api_key, api_url);
 OpenAI_ChatCompletion chat(openai);
 OpenAI_AudioTranscription audio(openai);
+
+// WiFi credentials are stored by the ESP-Wifi-Config library (flash/EEPROM)
+// instead of being hardcoded. When no known network is reachable the device
+// drops into AP mode and serves a web setup page to configure the WiFi.
+ESPWifiConfig wifiConfig(WIFI_AP_NAME, WIFI_SETUP_PORT, -1, false, "", "", true);
 
 uint32_t lastButtonState = HIGH;
 uint32_t lastDebounce = 0;
@@ -24,6 +30,45 @@ void combinedOutput(int x, int y, char* line, bool clrscr) {
   Serial.println(line);
   display.setCursor(x, y);
   display.println(line);
+  display.display();
+}
+
+// Show the current WiFi situation on the display (and Serial).
+//  - AP mode:    show the access point name + IP so it can be configured
+//  - connected:  show the IP address assigned by the router
+//  - otherwise:  show that it is still trying to connect
+void showWifiStatus() {
+  display.clearDisplay();
+  display.setCursor(0, 0);
+
+  if (wifiConfig.ESP_mode == AP_MODE) {
+    display.println(F("No WiFi connected"));
+    display.println(F("Join AP:"));
+    display.println(wifiConfig.get_AP_name());
+    display.print(F("IP: "));
+    display.println(wifiConfig.ESP_IP.toString());
+    display.print(F("Port: "));
+    display.println(WIFI_SETUP_PORT);
+    Serial.print(F("AP name: "));
+    Serial.println(wifiConfig.get_AP_name());
+    Serial.print(F("Setup URL: http://"));
+    Serial.print(wifiConfig.ESP_IP.toString());
+    Serial.print(F(":"));
+    Serial.println(WIFI_SETUP_PORT);
+  } else if (wifiConfig.wifi_connected) {
+    display.println(F("WiFi connected"));
+    display.print(F("SSID: "));
+    display.println(WiFi.SSID());
+    display.print(F("IP: "));
+    display.println(wifiConfig.ESP_IP.toString());
+    Serial.print(F("Connected to "));
+    Serial.print(WiFi.SSID());
+    Serial.print(F(" IP: "));
+    Serial.println(wifiConfig.ESP_IP.toString());
+  } else {
+    display.println(F("Connecting to WiFi..."));
+    Serial.println(F("Connecting to WiFi..."));
+  }
   display.display();
 }
 
@@ -82,18 +127,12 @@ void setup() {
   display.setTextColor(WHITE);
   display.clearDisplay();
 
-/* connect to WiFi */
+/* connect to WiFi (or start the setup access point) */
   combinedOutput(0, 0, "Connecting to WiFi", true);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  int pos = 0;
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    combinedOutput(pos, 4, ".", false);
-    pos = pos + 2;
-    if(pos >= 128) {
-      pos = 0;
-    }
+  if (wifiConfig.initialize() == AP_MODE) {
+    // No known network was reachable: the device is broadcasting an access
+    // point. Keep the setup web server running so the WiFi can be configured.
+    wifiConfig.Start_HTTP_Server(0);
   }
 
 /* setup i2s */  
@@ -117,9 +156,16 @@ void setup() {
 
   audio.setTemperature(0.1);
   audio.setLanguage("en");
+
+/* show the final WiFi status (access point name + IP, or the assigned IP) */
+  showWifiStatus();
 }
 
 void loop() {
+  // Keep the ESP-Wifi-Config machinery running: it (re)connects to a known
+  // network and serves the setup page while in AP mode.
+  wifiConfig.handle(10000);
+
   int reading = digitalRead(BUTTON_PIN);
 
   if (reading != lastButtonState) {
@@ -131,8 +177,15 @@ void loop() {
     if (reading == LOW) { // Button is pushed (low due to pullup)
       if(!buttonPushed) {
         buttonPushed = true;
-        String prompt = speechToText();
-        textGeneration(prompt);
+        if (wifiConfig.ESP_mode != AP_MODE && wifiConfig.wifi_connected) {
+          // Connected to a known network: show the IP, then run the voice flow.
+          showWifiStatus();
+          String prompt = speechToText();
+          textGeneration(prompt);
+        } else {
+          // Not connected: keep showing the access point / connection status.
+          showWifiStatus();
+        }
       }
     }
     else {
