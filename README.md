@@ -43,6 +43,15 @@ const char* api_url = "http://192\.168\.1\.5:8080/v1/";
 
 Please make sure to escape dots (.) in the url string like in the example above.
 
+### LocalAI endpoint & key
+
+The LocalAI API URL and key can be changed at runtime, the same way as the WiFi:
+
+- Open the **LocalAI setup page** at `http://<device-ip>:8081`.
+- Enter the API URL and key and press **Save**. The values are stored in flash and applied immediately, so a reboot is not required.
+
+The values in `config.h` (`api_url` / `api_key`) only act as initial defaults.
+
 ## Required Libraries
 
 To compile the program you'll need to install the following libraries in the Arduino IDE:
