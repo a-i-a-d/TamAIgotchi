@@ -47,7 +47,7 @@ uint32_t lastButtonState = HIGH;
 uint32_t lastDebounce = 0;
 bool buttonPushed = false;
 
-void combinedOutput(int x, int y, char* line, bool clrscr) {
+void combinedOutput(int x, int y, const char* line, bool clrscr) {
   if(clrscr) {
     display.clearDisplay();
   }
@@ -99,7 +99,7 @@ void saveLocalAISettings() {
 // ---- LocalAI setup web page (http://<device-ip>:8081) -------------------
 
 void handleLocalAIStatus() {
-  String body = F("{\"url\":\"") + localaiUrl + F("\",\"keySet\":") + (localaiKey.length() > 0 ? "true" : "false") + F("}");
+  String body = String("{\"url\":\"") + localaiUrl + F("\",\"keySet\":") + (localaiKey.length() > 0 ? "true" : "false") + F("}");
   localaiServer.send(200, "application/json", body);
 }
 
