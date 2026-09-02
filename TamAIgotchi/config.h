@@ -2,6 +2,8 @@ const char* ssid = "SSID";
 const char* password = "PASSWORD";
 const char* api_url = "http://192\.168\.1\.5:8080/v1/";
 const char* api_key = "sk1234567890";
+// Port of the LocalAI setup web page (http://<device-ip>:8081).
+#define LOCALAI_SETUP_PORT 8081
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
