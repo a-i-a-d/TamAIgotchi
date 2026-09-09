@@ -23,6 +23,12 @@ uint32_t lastButtonState = HIGH;
 uint32_t lastDebounce = 0;
 bool buttonPushed = false;
 
+// WiFi-config button (WIFI_CONFIG_BUTTON_PIN): holding it for a while
+// wipes the stored WiFi credentials so the device reboots into AP mode.
+bool wifiBtnHeld = false;
+unsigned long wifiBtnPressStart = 0;
+const unsigned long WIFI_BTN_LONG_PRESS_MS = 5000; // 5 s hold → reset WiFi settings
+
 void combinedOutput(int x, int y, char* line, bool clrscr) {
   if(clrscr) {
     display.clearDisplay();
@@ -72,6 +78,23 @@ void showWifiStatus() {
   display.display();
 }
 
+// Escape hatch: wipe the stored WiFi (and web) credentials and reboot.
+// With no saved SSID the library drops into AP mode, so the device
+// comes back up serving the setup page again. Used by the 5 s
+// long-press of the WiFi-config button when a wrong password was saved
+// and the device would otherwise keep retrying forever.
+void resetWifiSettingsAndRestart() {
+  wifiConfig.ESP_reset_settings(); // public library helper, library's own EEPROM layout
+  Serial.println(F("WiFi settings reset. Rebooting into setup AP mode..."));
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.println(F("WiFi settings reset."));
+  display.println(F("Rebooting to setup..."));
+  display.display();
+  delay(300);
+  ESP.restart();
+}
+
 String speechToText() {
   uint8_t *wav_buffer;
   size_t wav_size;
@@ -117,6 +140,8 @@ void setup() {
   Serial.begin(115200);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(LED_PIN, OUTPUT);
+  pinMode(WIFI_CONFIG_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(RESERVE_BUTTON_PIN, INPUT_PULLUP);
 
 /* setup display*/
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
@@ -165,6 +190,20 @@ void loop() {
   // Keep the ESP-Wifi-Config machinery running: it (re)connects to a known
   // network and serves the setup page while in AP mode.
   wifiConfig.handle(10000);
+
+  // WiFi-config button: a 5 s long-press wipes the stored WiFi settings
+  // and reboots into the setup AP (escape hatch for a wrong password).
+  if (digitalRead(WIFI_CONFIG_BUTTON_PIN) == LOW) {
+    if (!wifiBtnHeld) {
+      wifiBtnHeld = true;
+      wifiBtnPressStart = millis();
+    } else if ((millis() - wifiBtnPressStart) >= WIFI_BTN_LONG_PRESS_MS) {
+      Serial.println(F("WiFi-config button held 5 s - resetting WiFi settings"));
+      resetWifiSettingsAndRestart(); // does not return (reboots)
+    }
+  } else {
+    wifiBtnHeld = false;
+  }
 
   int reading = digitalRead(BUTTON_PIN);
 

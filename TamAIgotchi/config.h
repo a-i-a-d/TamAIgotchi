@@ -16,3 +16,6 @@ const char* api_key = "sk1234567890";
 
 #define BUTTON_PIN  3     // Button → GND (INPUT_PULLUP)
 #define LED_PIN     12
+
+#define WIFI_CONFIG_BUTTON_PIN 9   // Hold 5 s → reset saved WiFi settings & start the setup AP (Button → GND, INPUT_PULLUP)
+#define RESERVE_BUTTON_PIN 11      // Reserved, unused for now (Button → GND, INPUT_PULLUP)
