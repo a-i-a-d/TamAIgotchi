@@ -54,14 +54,12 @@ The WiFi credentials are not hardcoded. They are stored by the ESP-Wifi-Config l
 
 To compile the program you'll need to install the following libraries in the Arduino IDE:
 - Adafruit SSD1306
-- ESP-Wifi-Config (the patched fork — see below)
 
 You'll require two modified libraries:
 
 **1. ESP-Wifi-Config (fork with the 63-character WiFi password fix)**
 
 The stock ESP-Wifi-Config truncates WiFi passwords to 30 characters, so this project uses a fork with the fix:
-- If you have the stock **ESP-Wifi-Config** installed, remove it first (Sketch → Include Library → Manage Libraries → uninstall, or delete the `ESP-Wifi-Config` folder from your libraries directory)
 - Download [ESP-Wifi-Config v2.2.7](https://github.com/L0ria/ESP-Wifi-Config/archive/refs/tags/v2.2.7.zip)
 - In the Arduino IDE click Sketch->Include Library->Add .ZIP Library...
 - Select the downloaded ESP-Wifi-Config-2.2.7.zip file
