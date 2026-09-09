@@ -1,7 +1,11 @@
-const char* ssid = "SSID";
-const char* password = "PASSWORD";
 const char* api_url = "http://192\.168\.1\.5:8080/v1/";
 const char* api_key = "sk1234567890";
+
+// Base name of the access point broadcast while the device waits to be
+// configured. The full AP name is "<name>_<mac>", e.g. "TamAIgotchi_12345678".
+#define WIFI_AP_NAME "TamAIgotchi"
+// Port of the ESP-Wifi-Config setup web page (http://192.168.1.1:<port>).
+#define WIFI_SETUP_PORT 8080
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -12,3 +16,6 @@ const char* api_key = "sk1234567890";
 
 #define BUTTON_PIN  3     // Button → GND (INPUT_PULLUP)
 #define LED_PIN     12
+
+#define WIFI_CONFIG_BUTTON_PIN 9   // Hold 5 s → reset saved WiFi settings & start the setup AP (Button → GND, INPUT_PULLUP)
+#define RESERVE_BUTTON_PIN 11      // Reserved, unused for now (Button → GND, INPUT_PULLUP)
