@@ -28,7 +28,7 @@
 #include "alien.h"      // AlienAnimation
 #include "statusbar.h"  // statusBar (issue #46, step 3)
 #include "messages.h"   // MSG_* user-facing display strings (issue #36, step 6)
-#include "bubble.h"     // bubble (scroll / jump / render, issue #34, step 4)
+#include "bubble.h"     // bubble (scroll / render, issue #34, step 4)
 #include "led.h"      // led (recording LED, issue #47, step 4)
 
 // Hardware (issue #52, step 9 of 11 of the refactoring in #42): owns the
@@ -188,6 +188,6 @@ void loop() {
   // The app state machine (issue #53, step 10 of 11 of the refactoring in
   // #42): the IDLE / RECORDING / SENDING / RESPONSE flow, the alien idle
   // animation update, the 5 s WiFi-reset escape hatch and the response
-  // scroll / double-press logic all live in App::update() now (app.cpp).
+  // scroll logic all live in App::update() now (app.cpp).
   app.update();
 }

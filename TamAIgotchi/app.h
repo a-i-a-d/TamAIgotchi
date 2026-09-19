@@ -1,14 +1,14 @@
 // The app state machine (issue #53, step 10 of 11 of the refactoring plan
 // in #42) - the IDLE / RECORDING / SENDING / RESPONSE flow that used to be
-// inline in loop() (TamAIgotchi.ino), with its hidden statics
-// (recSecondsShown / lastPressMs / lastPressBtn) now members.
+// inline in loop() (TamAIgotchi.ino), with its hidden static
+// (recSecondsShown) now a member.
 //
 // The App class owns the state machine:
 //
 //   app.update()  - one pass of the IDLE / RECORDING / SENDING / RESPONSE
 //                   logic (the alien update, the 5 s WiFi-reset escape
 //                   hatch, the hold-to-record flow, the response
-//                   scroll/double-press logic) - call once per loop() pass,
+//                   scroll logic) - call once per loop() pass,
 //                   AFTER the three button update() calls
 //   app.state()   - the current state (read-only; the state transitions
 //                   happen inside update())
@@ -40,7 +40,7 @@ enum RecState { IDLE, RECORDING, SENDING, RESPONSE };
 // The host test harness (tests/test_main.cpp / tests/test_app.cpp) needs
 // to place the state machine in a state directly (the SENDING -> RESPONSE
 // transition is the blocking LLM flow, not reproducible with the no-op
-// host shims) + to observe the private throttle / double-press members.
+// host shims) + to observe the private throttle member.
 struct TestHarness;
 class App {
  public:
@@ -63,9 +63,9 @@ class App {
   //   SENDING   - the blocking transcription + LLM flow
   //               (rec_.sendRecording()); success -> RESPONSE, error ->
   //               IDLE (the main button is re-armed)
-  //   RESPONSE  - the scroll / double-press logic (500 ms window, the
-  //               other button resets the pair), the 5 s scroll-up hold
-  //               exits to IDLE, the main button starts a new take
+  //   RESPONSE  - the scroll logic (one line per press), the 5 s
+  //               scroll-up hold exits to IDLE, the main button starts a
+  //               new take
   // Call once per loop() pass, after the three button update() calls
   // (loop() is the only caller on the device).
   void update();
@@ -77,7 +77,7 @@ class App {
  private:
   // Re-render the response frame + refresh the "Response x/y" status
   // counter (issue #29 Q6). The former renderResponse() lambda in loop()
-  // (issue #53, step 10). Called after every scroll / jump, and on every
+  // (issue #53, step 10). Called after every scroll, and on every
   // press (a press also recovers the screen if the idle animation was
   // running when it landed, issue #16: the bubble still holds the response
   // text, so display_.render() restores it - Q4).
@@ -91,16 +91,13 @@ class App {
   //               transcription, then the LLM call (blocking)
   //   RESPONSE  - the LLM reply is shown in the speech bubble (issue #34,
   //               step 4 of the UI restructure in #29): GPIO9 short = scroll
-  //               down, GPIO11 short = scroll up, double-press of the same
-  //               button = jump to start/end (option A, #29 Q7), GPIO11 hold
-  //               5 s = back to IDLE, main button = new recording
+  //               down, GPIO11 short = scroll up (one line per press),
+  //               GPIO11 hold 5 s = back to IDLE, main button = new
+  //               recording
   RecState state_ = IDLE;
 
   // The hidden statics from loop() (issue #53, step 10): members now.
   unsigned long recSecondsShown_ = 0;   // recording counter throttle
-  unsigned long lastPressMs_ = 0;       // millis() of the last scroll press
-  int lastPressBtn_ = -1;               // -1 none, 0 = down, 1 = up
-  static constexpr unsigned long DOUBLE_PRESS_MS = 500;
 
   // The ten shared objects (constructor-injected references, issue #52,
   // step 9 pattern).

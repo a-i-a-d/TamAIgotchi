@@ -5,7 +5,6 @@
 //   - setText() resets lineCount()/scrollOffset() to 0 and wraps exactly
 //     like the wrapText() baseline (tests/test_text_utils.cpp)
 //   - scroll() clamps at both ends (no wrap-around)
-//   - jumpTo(false) -> offset 0; jumpTo(true) -> last visible window
 //   - clear() empties the table + offset
 //   - renderText() does not modify the stored table (Q4 rule: the stored
 //     response survives - count_/offset_ unchanged after renderText)
@@ -101,29 +100,11 @@ TEST(bubble_scroll_clamps_at_both_ends) {
   CHECK_EQ_INT(bubble.scrollOffset(), 0);  // clamped at 0
 }
 
-// --- jumpTo ------------------------------------------------------------------
-
-TEST(bubble_jumpTo_start_and_end) {
-  bubble.setText(String(words(20, 7).c_str()));  // 10 lines -> maxOffset 5
-  bubble.jumpTo(true);
-  CHECK_EQ_INT(bubble.scrollOffset(), 5);  // last visible window
-  bubble.jumpTo(false);
-  CHECK_EQ_INT(bubble.scrollOffset(), 0);  // first line
-}
-
-TEST(bubble_jumpTo_end_short_text_stays_zero) {
-  bubble.setText(String(words(4, 7).c_str()));  // 2 lines -> maxOffset 0
-  bubble.jumpTo(true);
-  CHECK_EQ_INT(bubble.scrollOffset(), 0);
-  bubble.jumpTo(false);
-  CHECK_EQ_INT(bubble.scrollOffset(), 0);
-}
-
 // --- clear -------------------------------------------------------------------
 
 TEST(bubble_clear_empties_table_and_offset) {
   bubble.setText(String(words(20, 7).c_str()));
-  bubble.jumpTo(true);
+  for (int i = 0; i < 10; i++) bubble.scroll(true);  // scroll to end (clamps at max)
   CHECK_EQ_INT(bubble.lineCount(), 10);
   bubble.clear();
   CHECK_EQ_INT(bubble.lineCount(), 0);
@@ -134,7 +115,7 @@ TEST(bubble_clear_empties_table_and_offset) {
 
 TEST(bubble_renderText_does_not_touch_stored_table) {
   bubble.setText(String(words(20, 7).c_str()));  // 10 lines
-  bubble.jumpTo(true);
+  for (int i = 0; i < 10; i++) bubble.scroll(true);  // scroll to end (clamps at max)
   int countBefore = bubble.lineCount();
   int offsetBefore = bubble.scrollOffset();
 
@@ -174,7 +155,7 @@ TEST(bubble_render_empty_still_draws_frame) {
 
 TEST(bubble_render_scrolled_window_draws_visible_lines) {
   bubble.setText(String(words(20, 7).c_str()));  // 10 lines
-  bubble.jumpTo(true);                            // window = lines 6..10
+  for (int i = 0; i < 10; i++) bubble.scroll(true);  // window = lines 6..10
   hw.panel().reset();
   bubble.render();
   // The visible window (lines 6..10) is printed, not the whole table:

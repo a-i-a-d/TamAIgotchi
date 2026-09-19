@@ -188,11 +188,11 @@ content (prompt, response, and the idle `hello`):
 
 Buttons (all wired to GND, `INPUT_PULLUP`):
 
-| Button | Short press | Double press | Hold 5 s |
-|---|---|---|---|
-| **GPIO3** (main) | — (it is the hold button) | — | **hold-to-record**: hold while recording (max 10 s), release to send |
-| **GPIO9** | scroll **down** one line | jump to **end** | **reset WiFi settings** & reboot into the setup AP |
-| **GPIO11** | scroll **up** one line | jump to **start** | **exit the response view** back to the idle screen |
+| Button | Short press | Hold 5 s |
+|---|---|---|
+| **GPIO3** (main) | — (it is the hold button) | **hold-to-record**: hold while recording (max 10 s), release to send |
+| **GPIO9** | scroll **down** one line | **reset WiFi settings** & reboot into the setup AP |
+| **GPIO11** | scroll **up** one line | **exit the response view** back to the idle screen |
 
 The main button (GPIO3) is hold-to-record — the hold is not a 5 s threshold
 action, it records for as long as it is held (capped at 10 s) and sends the
@@ -212,13 +212,13 @@ The text then is sent as prompt to the LocalAI gpt4 model and the response is sh
 
 ### Scrolling the response
 
-The LLM response can be longer than what fits in the speech bubble. It is shown as a scrollable 5-line window with a `Response x/y` counter in the status bar (first visible line / total lines). Use the two side buttons to scroll (a double press of the same button jumps to the start / end):
+The LLM response can be longer than what fits in the speech bubble. It is shown as a scrollable 5-line window with a `Response x/y` counter in the status bar (first visible line / total lines). Use the two side buttons to scroll one line at a time:
 
-| Button | Short press | Double press | Long press (5 s) |
-|---|---|---|---|
-| **GPIO9** | scroll **down** one line | jump to the **end** | reset WiFi settings & reboot into the setup AP (existing behavior) |
-| **GPIO11** | scroll **up** one line | jump to the **start** | exit the response view back to the idle screen |
-| **GPIO3** (main) | start a new recording (same as when idle) | — | — (it is the hold-to-record button) |
+| Button | Short press | Long press (5 s) |
+|---|---|---|
+| **GPIO9** | scroll **down** one line | reset WiFi settings & reboot into the setup AP (existing behavior) |
+| **GPIO11** | scroll **up** one line | exit the response view back to the idle screen |
+| **GPIO3** (main) | start a new recording (same as when idle) | — (it is the hold-to-record button) |
 
 Both scroll buttons are only active while the response is on screen; during recording / sending they are ignored.
 

@@ -55,20 +55,6 @@ void Bubble::clear() {
 int Bubble::lineCount() const { return count_; }
 int Bubble::scrollOffset() const { return offset_; }
 
-// Jump the scroll offset to the start (first line) or the end (last
-// visible window). The double-press jump (issue #34, step 4 of 6 of the
-// UI restructure in #29 - option A from #29 Q7): the same scroll button
-// pressed twice within ~500 ms jumps to the start / end so long answers
-// (~50+ wrapped lines) can be reached without ~45 single presses.
-void Bubble::jumpTo(bool toEnd) {
-  if (toEnd) {
-    offset_ = (count_ > BUBBLE_VISIBLE_LINES)
-             ? count_ - BUBBLE_VISIBLE_LINES
-             : 0;
-  } else {
-    offset_ = 0;
-  }
-}
 
 // Draw the bubble frame (rectangle + interior clear + tail) + up to
 // BUBBLE_VISIBLE_LINES lines of `lines[]` (the first `count` are valid)

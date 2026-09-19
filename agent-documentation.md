@@ -52,11 +52,11 @@ lines of the 128×64 panel — `STATUS_CHARS_PER_LINE`).
 
 ## Button semantics (must not drift)
 
-| Button | Short press | Double press | Hold 5 s |
-|---|---|---|---|
-| **GPIO3** (main) | — (it is the hold button) | — | **hold-to-record**: hold as long as you record (max 10 s), release = send |
-| **GPIO9** | scroll **down** one line | jump to **end** | **reset WiFi settings** & reboot into the setup AP |
-| **GPIO11** | scroll **up** one line | jump to **start** | **exit the response view** back to IDLE |
+| Button | Short press | Hold 5 s |
+|---|---|---|
+| **GPIO3** (main) | — (it is the hold button) | **hold-to-record**: hold as long as you record (max 10 s), release = send |
+| **GPIO9** | scroll **down** one line | **reset WiFi settings** & reboot into the setup AP |
+| **GPIO11** | scroll **up** one line | **exit the response view** back to IDLE |
 
 - The main button (GPIO3) is **hold-to-record** — the hold is not a 5 s
   threshold action, it records for as long as it is held (capped at
@@ -110,7 +110,7 @@ each header:
 | `Display` | `display.h/.cpp` | the single render pass (`render()`) + display-level actions (`showWifiStatus()`, `resetWifiSettingsAndRestart()`, `startRecording()`) |
 | `Recorder` | `recorder.h/.cpp` | the PSRAM recording buffer + the record → transcribe → LLM flow (`initRecBuffer()`, `sendRecording()`, `textGeneration()`) |
 | `AlienAnimation` | `alien.h/.cpp` | the idle-alien animation state machine + rendering |
-| `Bubble` | `bubble.h/.cpp` | the speech bubble: stored text, scroll / jump, `renderText()` |
+| `Bubble` | `bubble.h/.cpp` | the speech bubble: stored text, scroll, `renderText()` |
 | `StatusBar` | `statusbar.h/.cpp` | the top two status lines: `show()` / `error()` / `clear()` / `draw()` (the 21-char truncation) |
 | `Button` | `buttons.h/.cpp` | one instance per physical button: `update()` + `isPressed()` / `isLongPressed()` / `isHeld()` |
 | `Led` | `led.h/.cpp` | the recording LED: `on()` / `off()` / `isOn()` |

@@ -12,9 +12,7 @@
 //   - SENDING -> RESPONSE (the textGeneration() success path - driven
 //     through the shared recorder, the device's own code)
 //   - RESPONSE -> IDLE (scroll-up 5 s hold)
-//   - RESPONSE scroll: down/up single press (offset changes),
-//     double-press within 500 ms (jump to start/end), other-button resets
-//     the pair (up-down-up is never a double)
+//   - RESPONSE scroll: down/up single press (offset changes)
 //   - the recSecondsShown_ throttle (the recording counter refreshes once
 //     per whole second)
 //
@@ -54,15 +52,12 @@ extern Button scrollDownBtn;
 // The test harness (friend of App - issue #53, step 10): places the state
 // machine directly (the SENDING -> RESPONSE transition is the blocking LLM
 // flow, not reproducible with the no-op host shims) + observes the private
-// throttle / double-press members.
+// throttle member.
 struct TestHarness {
   static RecState state() { return app.state_; }
   static void set_state(RecState s) { app.state_ = s; }
   static unsigned long recSecondsShown() { return app.recSecondsShown_; }
   static void reset_recSecondsShown() { app.recSecondsShown_ = 0; }
-  static unsigned long lastPressMs() { return app.lastPressMs_; }
-  static int lastPressBtn() { return app.lastPressBtn_; }
-  static void reset_pair() { app.lastPressMs_ = 0; app.lastPressBtn_ = -1; }
 };
 
 // --- helpers ----------------------------------------------------------------
@@ -81,7 +76,7 @@ static void loop_pass() {
 
 // Reset the shared test state to a known baseline: the clock at 0, every
 // button released (HIGH), the app state at IDLE, the bubble empty, the
-// throttle + double-press members at their fresh-instance values.
+// throttle member at its fresh-instance value.
 static void reset_app_state() {
   host_set_millis(0);
   host_set_pin(BUTTON_PIN, HIGH);
@@ -94,7 +89,6 @@ static void reset_app_state() {
   led.off();
   TestHarness::set_state(IDLE);
   TestHarness::reset_recSecondsShown();
-  TestHarness::reset_pair();
   // The OpenAI shim hooks are empty by default (the no-op error path).
   host_openai_transcription = nullptr;
   host_openai_chat_response = nullptr;
@@ -145,11 +139,6 @@ static String long_response() {
   return r;
 }
 
-// The max scroll offset (the last visible window).
-static int max_offset() {
-  int count = bubble.lineCount();
-  return (count > BUBBLE_VISIBLE_LINES) ? count - BUBBLE_VISIBLE_LINES : 0;
-}
 
 // --- IDLE -> RECORDING (issue #53 test list, item 1) -------------------------
 
@@ -360,10 +349,9 @@ TEST(app_response_scroll_down_single_press) {
   CHECK_EQ_INT(0, bubble.scrollOffset());
   TestHarness::set_state(RESPONSE);
 
-  // A single scroll-down press (not a double: the pair is fresh) moves the
-  // offset to 1 + refreshes the "Response 2/N" counter. (The button is
-  // released after each press - like on the device, the one-shot flag
-  // re-arms on the HIGH edge.)
+  // A single scroll-down press moves the offset to 1 + refreshes the
+  // "Response 2/N" counter. (The button is released after each press -
+  // like on the device, the one-shot flag re-arms on the HIGH edge.)
   press_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1000);
   loop_pass();
   release_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1100);
@@ -392,100 +380,6 @@ TEST(app_response_scroll_up_single_press) {
   loop_pass();
   release_button(scrollUpBtn, SCROLL_UP_PIN, 3100);
   CHECK_EQ_INT(1, bubble.scrollOffset());
-}
-
-// --- RESPONSE scroll: double-press (jump to start / end) ---------------------
-
-TEST(app_response_double_press_down_jumps_to_end) {
-  reset_app_state();
-  bubble.setText(long_response());
-  int n = bubble.lineCount();
-  CHECK(n > BUBBLE_VISIBLE_LINES);
-  TestHarness::set_state(RESPONSE);
-
-  // Two scroll-down presses within DOUBLE_PRESS_MS (500 ms): the second
-  // one is a double -> jump to the end (the last visible window).
-  press_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1000);
-  loop_pass();
-  release_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1100);
-  CHECK_EQ_INT(1, bubble.scrollOffset());  // the first press scrolled
-
-  press_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1400);  // 400 ms later
-  loop_pass();
-  release_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1500);
-  CHECK_EQ_INT(max_offset(), bubble.scrollOffset());  // jumped to the end
-  CHECK_EQ(statusBar.line1().c_str(),
-           (String(MSG_RESPONSE_PREFIX) + String(max_offset() + 1) + "/" + String(n)).c_str());
-}
-
-TEST(app_response_double_press_up_jumps_to_start) {
-  reset_app_state();
-  bubble.setText(long_response());
-  TestHarness::set_state(RESPONSE);
-
-  // Move to the end first (a single down + a double down), then two ups
-  // within 500 ms: jump to the start (offset 0).
-  press_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1000);
-  loop_pass();
-  release_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1100);
-  press_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1400);
-  loop_pass();
-  release_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1500);
-  CHECK_EQ_INT(max_offset(), bubble.scrollOffset());
-
-  press_button(scrollUpBtn, SCROLL_UP_PIN, 2000);
-  loop_pass();
-  release_button(scrollUpBtn, SCROLL_UP_PIN, 2100);
-  CHECK_EQ_INT(max_offset() - 1, bubble.scrollOffset());  // the first up scrolled
-
-  press_button(scrollUpBtn, SCROLL_UP_PIN, 2400);  // 400 ms later
-  loop_pass();
-  release_button(scrollUpBtn, SCROLL_UP_PIN, 2500);
-  CHECK_EQ_INT(0, bubble.scrollOffset());  // jumped to the start
-}
-
-// --- RESPONSE scroll: the other button resets the pair -----------------------
-
-TEST(app_response_other_button_resets_the_pair) {
-  reset_app_state();
-  bubble.setText(long_response());
-  TestHarness::set_state(RESPONSE);
-
-  // up-down-up is NEVER a double (a press of the OTHER button resets the
-  // pair, issue #29 Q7 option A): each press is a single scroll step.
-  press_button(scrollUpBtn, SCROLL_UP_PIN, 1000);
-  loop_pass();
-  release_button(scrollUpBtn, SCROLL_UP_PIN, 1100);
-  CHECK_EQ_INT(0, bubble.scrollOffset());  // at the start, up is clamped
-
-  press_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1400);
-  loop_pass();
-  release_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1500);
-  CHECK_EQ_INT(1, bubble.scrollOffset());  // single step (the pair was reset)
-
-  press_button(scrollUpBtn, SCROLL_UP_PIN, 1800);
-  loop_pass();
-  release_button(scrollUpBtn, SCROLL_UP_PIN, 1900);
-  CHECK_EQ_INT(0, bubble.scrollOffset());  // single step back (NOT a jump)
-}
-
-// A double press OUTSIDE the 500 ms window is two single scrolls (not a
-// jump).
-TEST(app_response_presses_outside_window_are_single) {
-  reset_app_state();
-  bubble.setText(long_response());
-  TestHarness::set_state(RESPONSE);
-
-  press_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1000);
-  loop_pass();
-  release_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1100);
-  CHECK_EQ_INT(1, bubble.scrollOffset());
-
-  // 700 ms later (> DOUBLE_PRESS_MS): the second press is a single scroll.
-  press_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1700);
-  loop_pass();
-  release_button(scrollDownBtn, WIFI_CONFIG_BUTTON_PIN, 1800);
-  CHECK_EQ_INT(2, bubble.scrollOffset());  // NOT max_offset()
 }
 
 // --- RESPONSE: the main button starts a new take ------------------------------

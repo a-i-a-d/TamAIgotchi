@@ -82,11 +82,6 @@ class Bubble {
   // step 4).
   int scrollOffset() const;
 
-  // Jump the scroll offset to the start (toEnd = false: the first line) or
-  // the end (toEnd = true: the last visible window). Used by the
-  // double-press jump (issue #34, step 4 of 6 of the UI restructure in #29
-  // - option A from #29 Q7).
-  void jumpTo(bool toEnd);
 
   // Draw the bubble rectangle (always, even when empty) + the tail triangle
   // + the visible BUBBLE_VISIBLE_LINES window of the table into the current

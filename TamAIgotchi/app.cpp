@@ -1,9 +1,8 @@
 // The app state machine (issue #53, step 10 of 11 of the refactoring plan
 // in #42): the IDLE / RECORDING / SENDING / RESPONSE flow that used to be
-// inline in loop() (TamAIgotchi.ino), now a class. The hidden statics
-// (recSecondsShown / lastPressMs / lastPressBtn) are members; the
-// renderResponse() lambda is a private method; the recState global is
-// state_ (owned by this class).
+// inline in loop() (TamAIgotchi.ino), now a class. The hidden static
+// (recSecondsShown) is a member; the renderResponse() lambda is a private
+// method; the recState global is state_ (owned by this class).
 //
 // Behavior is 1:1 with the pre-step-10 loop() (issue #53: "behavior stays
 // identical") - the only changes are the object names (recState -> state_,
@@ -16,7 +15,7 @@
 #include "recorder.h"   // Recorder (the take streaming API + the SENDING flow)
 #include "alien.h"      // AlienAnimation (markActivity + the idle-animation update)
 #include "buttons.h"    // Button (isPressed / isLongPressed / isHeld / reset)
-#include "bubble.h"     // Bubble (scroll / jump / clear / lineCount / scrollOffset)
+#include "bubble.h"     // Bubble (scroll / clear / lineCount / scrollOffset)
 #include "statusbar.h"  // StatusBar (show / error)
 #include "led.h"        // Led (on / off)
 #include <Arduino.h>    // String, Serial, F(), millis()
@@ -140,34 +139,20 @@ void App::update() {
     // Issue #16: any button press is activity - it stops the animation
     // (if running) and restarts the auto-return timer.
     //
-    // Double-press jump (issue #29 Q7, option A): the same scroll button
-    // pressed twice within DOUBLE_PRESS_MS jumps to the start (up) / end
-    // (down) so long answers (~50+ wrapped lines) can be reached without
-    // ~45 single presses. A press of the OTHER button resets the pair, so
-    // up-down-up is never a double. The 5 s holds keep their meaning.
-    // (The lastPressMs / lastPressBtn statics are the lastPressMs_ /
-    // lastPressBtn_ members now, issue #53, step 10.)
+    // Scroll: one line per press (the double-press jump was removed in
+    // issue #66 - it was annoying when scrolling fast). The 5 s holds
+    // keep their meaning.
 
-    // GPIO9 (scroll down): short press = next line; double press = jump to
-    // the end; the 5 s long-press (WiFi reset) is already handled above
-    // in every state.
+    // GPIO9 (scroll down): short press = next line; the 5 s long-press
+    // (WiFi reset) is already handled above in every state.
     if (scrollDown_.isPressed()) {
       alien_.markActivity();
-      unsigned long now = millis();
-      bool isDouble = (lastPressBtn_ == 0) && ((now - lastPressMs_) < DOUBLE_PRESS_MS);
-      if (isDouble) {
-        bubble_.jumpTo(true);
-        D_TDLN(F("double-press down: jump to end"));
-      } else {
-        bubble_.scroll(true);
-        D_TD(F("scroll down ")); D_TDLN(bubble_.scrollOffset() + 1);
-      }
-      lastPressMs_ = now;
-      lastPressBtn_ = 0;
+      bubble_.scroll(true);
+      D_TD(F("scroll down ")); D_TDLN(bubble_.scrollOffset() + 1);
       renderResponse();
     }
-    // GPIO11 (scroll up): short press = previous line; double press = jump
-    // to the start; 5 s hold = exit the response view back to IDLE.
+    // GPIO11 (scroll up): short press = previous line; 5 s hold = exit the
+    // response view back to IDLE.
     if (scrollUp_.isLongPressed()) {
       Serial.println(F("Scroll-up button held 5 s - exiting response view"));
       D_TDLN(F("scroll-up button long-press: back to IDLE"));
@@ -179,17 +164,8 @@ void App::update() {
     }
     if (scrollUp_.isPressed()) {
       alien_.markActivity();
-      unsigned long now = millis();
-      bool isDouble = (lastPressBtn_ == 1) && ((now - lastPressMs_) < DOUBLE_PRESS_MS);
-      if (isDouble) {
-        bubble_.jumpTo(false);
-        D_TDLN(F("double-press up: jump to start"));
-      } else {
-        bubble_.scroll(false);
-        D_TD(F("scroll up ")); D_TDLN(bubble_.scrollOffset() + 1);
-      }
-      lastPressMs_ = now;
-      lastPressBtn_ = 1;
+      bubble_.scroll(false);
+      D_TD(F("scroll up ")); D_TDLN(bubble_.scrollOffset() + 1);
       renderResponse();
     }
     // Main button: starts a new recording (same as in IDLE - the App class
@@ -219,8 +195,8 @@ void App::update() {
 }
 
 // Re-render the response frame (single render pass, issue #35, step 5) +
-// refresh the "Response x/y" status counter. Called after every scroll /
-// jump, and on every press (a press also recovers the screen if the idle
+// refresh the "Response x/y" status counter. Called after every scroll,
+// and on every press (a press also recovers the screen if the idle
 // animation was running when it landed, issue #16: the bubble still holds
 // the response text, so display_.render() restores it - Q4).
 // The former renderResponse() lambda in loop() (issue #53, step 10).
